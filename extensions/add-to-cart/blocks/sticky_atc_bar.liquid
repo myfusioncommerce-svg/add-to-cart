@@ -1,0 +1,354 @@
+{% assign product = block.settings.product | default: product %}
+
+<div id="fusion-sticky-bar-{{ block.id }}" class="fusion-sticky-bar-wrapper" style="display: none;">
+  {%- if block.settings.show_timer -%}
+    <div class="fusion-timer-bar" style="background-color: {{ block.settings.timer_bg_color }}; color: {{ block.settings.timer_text_color }};">
+      <span class="fusion-timer-text">
+        {{ block.settings.timer_text }} <span id="fusion-countdown-{{ block.id }}">00:00:00</span>
+      </span>
+    </div>
+  {%- endif -%}
+
+  <div class="fusion-sticky-bar-content" style="background-color: {{ block.settings.bar_bg_color }};">
+    <div class="fusion-sticky-container">
+      <div class="fusion-product-info">
+        <img src="{{ product.featured_image | image_url: width: 100 }}" alt="{{ product.title }}" class="fusion-sticky-img">
+        <div class="fusion-text-details">
+          <span class="fusion-sticky-title">{{ product.title }}</span>
+          <div class="fusion-sticky-price">
+            <span class="fusion-current-price">{{ product.selected_or_first_available_variant.price | money }}</span>
+            {% if product.selected_or_first_available_variant.compare_at_price > product.selected_or_first_available_variant.price %}
+              <span class="fusion-compare-price">{{ product.selected_or_first_available_variant.compare_at_price | money }}</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="fusion-sticky-actions">
+        {%- if product.variants.size > 1 -%}
+          <select id="fusion-variant-select-{{ block.id }}" class="fusion-sticky-select">
+            {% for variant in product.variants %}
+              <option value="{{ variant.id }}" {% if variant == product.selected_or_first_available_variant %}selected{% endif %}>
+                {{ variant.title }}
+              </option>
+            {% endfor %}
+          </select>
+        {%- endif -%}
+
+        <div class="fusion-sticky-qty-wrapper">
+          <button type="button" onclick="updateStickyQty(-1)">-</button>
+          <input type="number" id="fusion-sticky-qty-{{ block.id }}" value="1" min="1">
+          <button type="button" onclick="updateStickyQty(1)">+</button>
+        </div>
+
+        <button type="button" 
+                class="fusion-sticky-atc-btn {{ block.settings.atc_animation }}"
+                onclick="addStickyToCart()"
+                style="background-color: {{ block.settings.atc_bg_color }}; color: {{ block.settings.atc_text_color }};">
+          {{ block.settings.atc_text }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% style %}
+  .fusion-sticky-bar-wrapper {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    z-index: 2147483647 !important;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+  }
+  .fusion-timer-bar {
+    padding: 8px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 14px;
+  }
+  .fusion-sticky-bar-content {
+    padding: 10px 20px;
+    border-top: 1px solid #eee;
+  }
+  .fusion-sticky-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+  }
+  .fusion-product-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .fusion-sticky-img {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 4px;
+  }
+  .fusion-text-details {
+    display: flex;
+    flex-direction: column;
+  }
+  .fusion-sticky-title {
+    font-weight: 600;
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+  }
+  .fusion-current-price {
+    font-weight: bold;
+    color: #e62e2e;
+  }
+  .fusion-compare-price {
+    text-decoration: line-through;
+    color: #999;
+    font-size: 0.9em;
+    margin-left: 5px;
+  }
+  .fusion-sticky-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .fusion-sticky-select {
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+  }
+  .fusion-sticky-qty-wrapper {
+    display: flex;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #fff;
+  }
+  .fusion-sticky-qty-wrapper button {
+    background: none;
+    border: none;
+    padding: 8px 12px;
+    cursor: pointer;
+  }
+  .fusion-sticky-qty-wrapper input {
+    width: 40px;
+    text-align: center;
+    border: none;
+    border-left: 1px solid #ddd;
+    border-right: 1px solid #ddd;
+    -moz-appearance: textfield;
+  }
+  .fusion-sticky-qty-wrapper input::-webkit-outer-spin-button,
+  .fusion-sticky-qty-wrapper input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  .fusion-sticky-atc-btn {
+    padding: 10px 25px;
+    border: none;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    overflow: hidden;
+  }
+  .fusion-sticky-atc-btn:hover {
+    filter: brightness(0.9);
+    transform: translateY(-2px);
+  }
+  .fusion-sticky-atc-btn:active {
+    transform: scale(0.95);
+  }
+
+  .fusion-sticky-atc-btn.is-success {
+    animation: fusion-atc-pop 0.4s ease-out;
+  }
+  @keyframes fusion-atc-pop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+  }
+
+  /* Ripple Effect */
+  .fusion-sticky-atc-btn::after {
+    content: "";
+    display: block;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    background-image: radial-gradient(circle, #fff 10%, transparent 10.01%);
+    background-repeat: no-repeat;
+    background-position: 50%;
+    transform: scale(10, 10);
+    opacity: 0;
+    transition: transform 0.5s, opacity 1s;
+  }
+  .fusion-sticky-atc-btn:active::after {
+    transform: scale(0, 0);
+    opacity: 0.3;
+    transition: 0s;
+  }
+
+  @media (max-width: 768px) {
+    .fusion-sticky-title, .fusion-compare-price {
+      display: none;
+    }
+    .fusion-sticky-container {
+      gap: 5px;
+    }
+    .fusion-sticky-atc-btn {
+      padding: 10px 15px;
+    }
+  }
+{% endstyle %}
+
+<script>
+  (function() {
+    const bar = document.getElementById('fusion-sticky-bar-{{ block.id }}');
+    const scrollThreshold = window.innerWidth < 768 ? 200 : 400;
+
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > scrollThreshold) {
+        bar.style.display = 'block';
+      } else {
+        bar.style.display = 'none';
+      }
+    });
+
+    // Countdown Logic
+    {% if block.settings.show_timer %}
+      function startCountdown() {
+        let hours = {{ block.settings.timer_hours }};
+        let mins = {{ block.settings.timer_mins }};
+        let secs = {{ block.settings.timer_secs }};
+        
+        const display = document.getElementById('fusion-countdown-{{ block.id }}');
+        
+        setInterval(() => {
+          if (secs > 0) secs--;
+          else if (mins > 0) { mins--; secs = 59; }
+          else if (hours > 0) { hours--; mins = 59; secs = 59; }
+          
+          display.innerHTML = 
+            String(hours).padStart(1, '0') + "d " + 
+            String(mins).padStart(2, '0') + "h " + 
+            String(secs).padStart(2, '0') + "m";
+        }, 1000);
+      }
+      startCountdown();
+    {% endif %}
+  })();
+
+  function updateStickyQty(val) {
+    const input = document.getElementById('fusion-sticky-qty-{{ block.id }}');
+    let current = parseInt(input.value);
+    if (current + val >= 1) input.value = current + val;
+  }
+
+  function addStickyToCart() {
+    const root = window.Shopify && window.Shopify.routes ? window.Shopify.routes.root : '/';
+    const baseUrl = root.endsWith('/') ? root : root + '/';
+    
+    const variantId = document.getElementById('fusion-variant-select-{{ block.id }}')?.value || '{{ product.selected_or_first_available_variant.id }}';
+    const qtyInput = document.getElementById('fusion-sticky-qty-{{ block.id }}');
+    const qty = qtyInput.value;
+    const btn = document.querySelector('.fusion-sticky-atc-btn');
+    
+    if (btn.classList.contains('is-success')) return;
+
+    console.log('Fusion Sticky: Adding', { variantId, qty, baseUrl });
+    
+    btn.style.pointerEvents = 'none';
+    btn.style.opacity = '0.7';
+    const originalText = btn.innerHTML;
+    btn.innerHTML = 'Adding...';
+
+    let formData = { 'items': [{ 'id': Number(variantId), 'quantity': parseInt(qty) || 1 }] };
+    
+    fetch(baseUrl + 'cart/add.js', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(formData)
+    })
+    .then(response => {
+      if (!response.ok) return response.json().then(e => { throw e; });
+      return response.json();
+    })
+    .then(data => {
+      console.log('Fusion Sticky: Success', data);
+      btn.classList.add('is-success');
+      btn.innerHTML = 'Added ✓';
+      btn.style.opacity = '1';
+      btn.style.backgroundColor = '#4caf50';
+      btn.style.color = '#ffffff';
+
+      if (window.fusionRefreshCartUI) {
+        window.fusionRefreshCartUI(data);
+      } else {
+        document.dispatchEvent(new CustomEvent('cart:updated', { detail: { cart: data } }));
+        // Fallback refresh cart drawer
+        if (window.location.pathname !== '/cart') {
+          fetch(baseUrl + 'cart.js')
+            .then(res => res.json())
+            .then(cart => {
+               document.dispatchEvent(new CustomEvent('cart:refresh', { detail: cart }));
+            }).catch(() => {});
+        }
+      }
+
+      setTimeout(() => {
+        btn.classList.remove('is-success');
+        btn.innerHTML = originalText;
+        btn.style.pointerEvents = 'auto';
+        btn.style.backgroundColor = '{{ block.settings.atc_bg_color }}';
+        btn.style.color = '{{ block.settings.atc_text_color }}';
+      }, 2000);
+    })
+    .catch(err => {
+      console.error('Fusion Sticky Error:', err);
+      btn.style.pointerEvents = 'auto';
+      btn.style.opacity = '1';
+      btn.innerHTML = originalText;
+      alert('Could not add to cart: ' + (err.description || err.message || 'Check stock'));
+    });
+  }
+</script>
+
+{% schema %}
+{
+  "name": "Sticky ATC Bar",
+  "target": "section",
+  "settings": [
+    { "type": "product", "id": "product", "label": "Product", "autofill": true },
+    {
+      "type": "header",
+      "content": "Bar Styles"
+    },
+    { "type": "color", "id": "bar_bg_color", "label": "Bar Background", "default": "#ffffff" },
+    { "type": "text", "id": "atc_text", "label": "Button Text", "default": "Add to cart" },
+    { "type": "color", "id": "atc_bg_color", "label": "Button Background", "default": "#ccff00" },
+    { "type": "color", "id": "atc_text_color", "label": "Button Text Color", "default": "#000000" },
+    {
+      "type": "header",
+      "content": "Countdown Timer"
+    },
+    { "type": "checkbox", "id": "show_timer", "label": "Show Timer", "default": true },
+    { "type": "text", "id": "timer_text", "label": "Timer Label", "default": "Hurry up! Sale ends in: " },
+    { "type": "color", "id": "timer_bg_color", "label": "Timer Background", "default": "#ccff00" },
+    { "type": "color", "id": "timer_text_color", "label": "Timer Text Color", "default": "#000000" },
+    { "type": "number", "id": "timer_hours", "label": "Initial Days/Hours", "default": 0 },
+    { "type": "number", "id": "timer_mins", "label": "Initial Minutes", "default": 15 },
+    { "type": "number", "id": "timer_secs", "label": "Initial Seconds", "default": 0 }
+  ]
+}
+{% endschema %}

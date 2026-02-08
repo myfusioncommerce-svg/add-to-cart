@@ -1,0 +1,335 @@
+<div id="fusion-global-atc-root" style="display:none;"></div>
+
+{% style %}
+  .fusion-global-atc-btn {
+    position: absolute;
+    z-index: 50;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border: none;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    padding: 0;
+    overflow: hidden;
+    {% if block.settings.show_on_hover %}
+      opacity: 0;
+      transform: scale(0.8);
+    {% endif %}
+  }
+
+  .fusion-global-atc-btn:active {
+    transform: scale(0.9) !important;
+  }
+
+  /* Ripple Effect */
+  .fusion-global-atc-btn::after {
+    content: "";
+    display: block;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    background-image: radial-gradient(circle, #fff 10%, transparent 10.01%);
+    background-repeat: no-repeat;
+    background-position: 50%;
+    transform: scale(10, 10);
+    opacity: 0;
+    transition: transform 0.5s, opacity 1s;
+  }
+  .fusion-global-atc-btn:active::after {
+    transform: scale(0, 0);
+    opacity: 0.3;
+    transition: 0s;
+  }
+
+  {% if block.settings.show_on_hover %}
+    {{ block.settings.card_selector }}:hover .fusion-global-atc-btn {
+      opacity: 1;
+      transform: scale(1);
+    }
+  {% endif %}
+
+  .fusion-global-atc-btn:hover {
+    transform: scale(1.1) !important;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.25);
+  }
+
+  .fusion-global-atc-btn.is-loading {
+    cursor: wait;
+    filter: brightness(0.9);
+  }
+
+  .fusion-global-atc-btn.is-success {
+    background-color: {{ block.settings.success_color }} !important;
+  }
+
+  .fusion-global-atc-icon-img {
+    width: 60%;
+    height: 60%;
+    object-fit: contain;
+    pointer-events: none;
+  }
+
+  .fusion-global-atc-btn svg {
+    width: 60%;
+    height: 60%;
+    pointer-events: none;
+  }
+
+  /* Ensure the product card container has relative positioning */
+  {{ block.settings.card_selector }} {
+    position: relative !important;
+  }
+{% endstyle %}
+
+<script>
+  (function() {
+    const config = {
+      selector: "{{ block.settings.card_selector }}",
+      size: {{ block.settings.size }},
+      radius: "{{ block.settings.border_radius }}%",
+      bgColor: "{{ block.settings.bg_color }}",
+      iconColor: "{{ block.settings.icon_color }}",
+      position: "{{ block.settings.position }}",
+      successColor: "{{ block.settings.success_color }}"
+    };
+
+    function injectGlobalIcons() {
+      const cards = document.querySelectorAll(config.selector);
+      
+      cards.forEach(card => {
+        if (card.querySelector('.fusion-global-atc-btn')) return;
+
+        // Find the product link to extract the handle
+        const productLink = card.querySelector('a[href*="/products/"]');
+        if (!productLink) return;
+
+        const href = productLink.getAttribute('href');
+        const handleMatch = href.split('?')[0].match(/\/products\/([a-zA-Z0-9\-_]+)/);
+        if (!handleMatch) return;
+        const handle = handleMatch[1];
+
+        // Create the button
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'fusion-global-atc-btn';
+        btn.style.width = config.size + 'px';
+        btn.style.height = config.size + 'px';
+        btn.style.borderRadius = config.radius;
+        btn.style.backgroundColor = config.bgColor;
+        
+        // Positioning logic
+        const offset = "10px";
+        if (config.position.includes('top')) btn.style.top = offset;
+        else btn.style.bottom = offset;
+        if (config.position.includes('right')) btn.style.right = offset;
+        else btn.style.left = offset;
+
+        // Icon Content
+        {% if block.settings.custom_icon != blank %}
+          btn.innerHTML = `<img src="{{ block.settings.custom_icon | image_url: width: 100 }}" class="fusion-global-atc-icon-img" alt="Add to cart">`;
+        {% else %}
+          btn.innerHTML = `
+            <svg viewBox="0 0 24 24" fill="none" stroke="${config.iconColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <path d="M16 10a4 4 0 0 1-8 0"></path>
+            </svg>
+          `;
+        {% endif %}
+
+        btn.onclick = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          handleGlobalATC(handle, btn);
+        };
+
+        // If theme has an image container specifically, try to append there for better alignment
+        const imgContainer = card.querySelector('.media, .grid-view-item__image-container, .card__inner');
+        if (imgContainer) {
+          imgContainer.appendChild(btn);
+        } else {
+          card.appendChild(btn);
+        }
+      });
+    }
+
+    async function handleGlobalATC(handle, btn) {
+      if (btn.classList.contains('is-loading') || btn.classList.contains('is-success')) return;
+      
+      const root = window.Shopify && window.Shopify.routes ? window.Shopify.routes.root : '/';
+      const baseUrl = root.endsWith('/') ? root : root + '/';
+      
+      btn.classList.add('is-loading');
+
+      try {
+        const response = await fetch(`${baseUrl}products/${handle}.js`);
+        if (!response.ok) throw new Error('Product not found');
+        const product = await response.json();
+        
+        // Find first available variant
+        const variant = product.variants.find(v => v.available) || product.variants[0];
+        
+        const cartResponse = await fetch(baseUrl + 'cart/add.js', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 'items': [{ 'id': variant.id, 'quantity': 1 }] })
+        });
+        
+        if (!cartResponse.ok) throw await cartResponse.json();
+        const cartData = await cartResponse.json();
+
+        // Success state
+        btn.classList.remove('is-loading');
+        btn.classList.add('is-success');
+        const originalHTML = btn.innerHTML;
+        btn.innerHTML = `
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        `;
+
+        if (window.fusionRefreshCartUI) window.fusionRefreshCartUI(cartData);
+        else if (typeof refreshCartUI === 'function') refreshCartUI(cartData);
+
+        setTimeout(() => {
+          btn.classList.remove('is-success');
+          btn.innerHTML = originalHTML;
+        }, 2000);
+
+      } catch (error) {
+        console.error('Fusion Global ATC Error:', error);
+        btn.classList.remove('is-loading');
+        alert('Could not add to cart: ' + (error.description || error.message || 'Check stock'));
+      }
+    }
+
+    window.fusionRefreshCartUI = function(cart) {
+      // 1. Dispatch standard Shopify events
+      document.dispatchEvent(new CustomEvent('cart:updated', { detail: { cart: cart } }));
+      document.dispatchEvent(new CustomEvent('ajaxProduct:added', { detail: { product: cart } }));
+      
+      // 2. Specific support for Dawn and modern themes (Wrapped in try-catch to prevent crashes)
+      try {
+        const cartDrawer = document.querySelector('cart-drawer');
+        if (cartDrawer && typeof cartDrawer.renderContents === 'function') {
+          cartDrawer.renderContents(cart);
+        }
+      } catch (e) { console.warn('Fusion: Cart Drawer update skipped', e); }
+
+      try {
+        const cartNotification = document.querySelector('cart-notification');
+        if (cartNotification && typeof cartNotification.renderContents === 'function') {
+          cartNotification.renderContents(cart);
+        }
+      } catch (e) { console.warn('Fusion: Cart Notification update skipped', e); }
+
+      // 3. Manual update for header bubbles (fallback - safest method)
+      try {
+        const countBubbles = document.querySelectorAll('.cart-count-bubble, #cart-icon-bubble span, .cart-link__count, .header__cart-count');
+        
+        // If we only have the added item, we should fetch the full cart count
+        if (cart && typeof cart.item_count === 'undefined') {
+          const root = window.Shopify && window.Shopify.routes ? window.Shopify.routes.root : '/';
+          fetch((root.endsWith('/') ? root : root + '/') + 'cart.js')
+            .then(res => res.json())
+            .then(fullCart => {
+              countBubbles.forEach(bubble => {
+                bubble.textContent = fullCart.item_count;
+                bubble.classList.remove('hidden');
+              });
+            });
+        } else if (cart) {
+          countBubbles.forEach(bubble => {
+            bubble.textContent = cart.item_count;
+            bubble.classList.remove('hidden');
+          });
+        }
+      } catch (e) { console.warn('Fusion: Bubble update skipped', e); }
+
+      // 4. Force section refresh event
+      if (window.location.pathname !== '/cart') {
+        const root = window.Shopify && window.Shopify.routes ? window.Shopify.routes.root : '/';
+        const baseUrl = root.endsWith('/') ? root : root + '/';
+        
+        fetch(baseUrl + 'cart.js')
+          .then(res => res.json())
+          .then(updatedCart => {
+             document.dispatchEvent(new CustomEvent('cart:refresh', { detail: updatedCart }));
+          }).catch(() => {});
+      }
+    };
+
+    function refreshCartUI(cart) {
+      window.fusionRefreshCartUI(cart);
+    }
+
+    // Initial run
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', injectGlobalIcons);
+    } else {
+      injectGlobalIcons();
+    }
+
+    // Run on scroll and dynamic updates
+    window.addEventListener('scroll', () => {
+      clearTimeout(window.fusionGlobalTimeout);
+      window.fusionGlobalTimeout = setTimeout(injectGlobalIcons, 500);
+    });
+
+    // Support for Shopify theme editor events
+    document.addEventListener('shopify:section:load', injectGlobalIcons);
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Global ATC Icon",
+  "target": "body",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Targeting"
+    },
+    { 
+      "type": "text", 
+      "id": "card_selector", 
+      "label": "Product Card Selector", 
+      "default": ".card-wrapper",
+      "info": "The CSS selector for your product cards (e.g., .card-wrapper, .product-card, .grid-view-item)."
+    },
+    {
+      "type": "header",
+      "content": "Icon Style"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_on_hover",
+      "label": "Show only on hover",
+      "default": false
+    },
+    {
+      "type": "select",
+      "id": "position",
+      "label": "Position",
+      "options": [
+        { "value": "top-right", "label": "Top Right" },
+        { "value": "top-left", "label": "Top Left" },
+        { "value": "bottom-right", "label": "Bottom Right" },
+        { "value": "bottom-left", "label": "Bottom Left" }
+      ],
+      "default": "top-right"
+    },
+    { "type": "range", "id": "size", "min": 30, "max": 70, "step": 5, "unit": "px", "label": "Size", "default": 40 },
+    { "type": "range", "id": "border_radius", "min": 0, "max": 50, "step": 5, "unit": "%", "label": "Roundness", "default": 50 },
+    { "type": "color", "id": "bg_color", "label": "Background Color", "default": "#ffffff" },
+    { "type": "color", "id": "icon_color", "label": "Icon Color", "default": "#000000" },
+    { "type": "color", "id": "success_color", "label": "Success Color", "default": "#4caf50" },
+    { "type": "image_picker", "id": "custom_icon", "label": "Custom Icon (Optional)" }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,461 @@
+{% assign product = block.settings.product | default: product %}
+
+<div class="fusion-button-container fusion-container-{{ block.id }}" 
+     style="display: flex; 
+            flex-direction: {{ block.settings.direction }}; 
+            gap: {{ block.settings.gap }}px; 
+            justify-content: {{ block.settings.alignment }};
+            margin-top: {{ block.settings.margin_top }}px;
+            margin-bottom: {{ block.settings.margin_bottom }}px;
+            width: 100%;">
+  
+  {%- if block.settings.show_atc -%}
+    <div class="fusion-atc-wrapper {% if block.settings.full_width %}fusion-full-width{% endif %}">
+      {%- if block.settings.atc_type == 'image' and block.settings.atc_image != blank -%}
+        <button type="button" class="fusion-atc-button fusion-image-button {{ block.settings.atc_animation }}" onclick="addToCart('{{ product.selected_or_first_available_variant.id }}', 1)">
+          <img src="{{ block.settings.atc_image | image_url: width: 400 }}" 
+               alt="{{ block.settings.atc_text }}"
+               style="width: {{ block.settings.atc_image_width }}px; height: auto;">
+        </button>
+      {%- else -%}
+        <button type="button" 
+                class="fusion-atc-button fusion-standard-button atc-btn-{{ block.id }} {{ block.settings.atc_animation }}"
+                onclick="addToCart('{{ product.selected_or_first_available_variant.id }}', 1)">
+          {{ block.settings.atc_text }}
+        </button>
+      {%- endif -%}
+    </div>
+  {%- endif -%}
+
+  {%- if block.settings.show_buy_now -%}
+    <div class="fusion-buy-now-wrapper {% if block.settings.full_width %}fusion-full-width{% endif %}">
+      {%- if block.settings.buy_now_type == 'image' and block.settings.buy_now_image != blank -%}
+        <button type="button" class="fusion-buy-now-button fusion-image-button {{ block.settings.buy_now_animation }}" onclick="buyNow('{{ product.selected_or_first_available_variant.id }}', 1)">
+          <img src="{{ block.settings.buy_now_image | image_url: width: 400 }}" 
+               alt="{{ block.settings.buy_now_text }}"
+               style="width: {{ block.settings.buy_now_image_width }}px; height: auto;">
+        </button>
+      {%- else -%}
+        <button type="button" 
+                class="fusion-buy-now-button fusion-standard-button buy-btn-{{ block.id }} {{ block.settings.buy_now_animation }}"
+                onclick="buyNow('{{ product.selected_or_first_available_variant.id }}', 1)">
+          {{ block.settings.buy_now_text }}
+        </button>
+      {%- endif -%}
+    </div>
+  {%- endif -%}
+</div>
+
+{% style %}
+  .fusion-full-width {
+    flex: 1;
+  }
+  .fusion-full-width .fusion-atc-button, 
+  .fusion-full-width .fusion-buy-now-button {
+    width: 100% !important;
+  }
+
+  .fusion-standard-button {
+    width: {{ block.settings.button_width }}px;
+    max-width: 100%;
+  }
+
+  /* ATC Button Custom Styles */
+  .atc-btn-{{ block.id }} {
+    background-color: {{ block.settings.atc_bg_color }};
+    color: {{ block.settings.atc_text_color }};
+    padding: {{ block.settings.atc_padding_v }}px {{ block.settings.atc_padding_h }}px;
+    border-radius: {{ block.settings.atc_border_radius }}px;
+    font-size: {{ block.settings.atc_font_size }}px;
+    font-weight: {{ block.settings.atc_font_weight }};
+    text-transform: {{ block.settings.atc_text_transform }};
+    border: {{ block.settings.atc_border_width }}px solid {{ block.settings.atc_border_color }};
+    box-shadow: {% if block.settings.atc_show_shadow %}0px 4px 10px {{ block.settings.atc_shadow_color }}{% else %}none{% endif %};
+  }
+  .atc-btn-{{ block.id }}:hover {
+    background-color: {{ block.settings.atc_hover_bg_color }};
+    color: {{ block.settings.atc_hover_text_color }};
+    {% if block.settings.atc_show_shadow %}
+    box-shadow: 0px 6px 15px {{ block.settings.atc_shadow_color }};
+    {% endif %}
+  }
+
+  /* Buy Now Button Custom Styles */
+  .buy-btn-{{ block.id }} {
+    background-color: {{ block.settings.buy_now_bg_color }};
+    color: {{ block.settings.buy_now_text_color }};
+    padding: {{ block.settings.buy_now_padding_v }}px {{ block.settings.buy_now_padding_h }}px;
+    border-radius: {{ block.settings.buy_now_border_radius }}px;
+    font-size: {{ block.settings.buy_now_font_size }}px;
+    font-weight: {{ block.settings.buy_now_font_weight }};
+    text-transform: {{ block.settings.buy_now_text_transform }};
+    border: {{ block.settings.buy_now_border_width }}px solid {{ block.settings.buy_now_border_color }};
+    box-shadow: {% if block.settings.buy_now_show_shadow %}0px 4px 10px {{ block.settings.buy_now_shadow_color }}{% else %}none{% endif %};
+  }
+  .buy-btn-{{ block.id }}:hover {
+    background-color: {{ block.settings.buy_now_hover_bg_color }};
+    color: {{ block.settings.buy_now_hover_text_color }};
+    {% if block.settings.buy_now_show_shadow %}
+    box-shadow: 0px 6px 15px {{ block.settings.buy_now_shadow_color }};
+    {% endif %}
+  }
+
+  .fusion-atc-button, .fusion-buy-now-button {
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1.2;
+    text-align: center;
+    text-decoration: none;
+  }
+
+  /* Animations */
+  .fusion-pulse:hover {
+    animation: fusion-pulse 1s infinite;
+  }
+  @keyframes fusion-pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+  }
+
+  .fusion-shake:hover {
+    animation: fusion-shake 0.5s infinite;
+  }
+  @keyframes fusion-shake {
+    0% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    50% { transform: translateX(5px); }
+    75% { transform: translateX(-5px); }
+    100% { transform: translateX(0); }
+  }
+
+  .fusion-zoom:hover {
+    transform: scale(1.1) !important;
+  }
+
+  .fusion-lift:hover {
+    transform: translateY(-5px) !important;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.15) !important;
+  }
+
+  .fusion-glow:hover {
+    box-shadow: 0 0 15px currentColor !important;
+  }
+
+  .fusion-rotate:hover {
+    transform: rotate(3deg) scale(1.05) !important;
+  }
+
+  .fusion-shine {
+    position: relative;
+    overflow: hidden;
+  }
+  .fusion-shine::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -60%;
+    width: 20%;
+    height: 200%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: rotate(30deg);
+    transition: none;
+  }
+  .fusion-shine:hover::after {
+    left: 120%;
+    transition: all 0.7s ease-in-out;
+  }
+
+  .fusion-image-button {
+    background: transparent;
+    padding: 0;
+  }
+  .fusion-image-button:hover {
+    transform: scale(1.05);
+  }
+
+  .fusion-btn-loading {
+    pointer-events: none;
+    opacity: 0.7;
+  }
+  .fusion-btn-loading::after {
+    content: "";
+    width: 16px;
+    height: 16px;
+    border: 2px solid transparent;
+    border-top-color: currentColor;
+    border-radius: 50%;
+    margin-left: 10px;
+    animation: fusion-spin 0.6s linear infinite;
+  }
+  @keyframes fusion-spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .fusion-atc-button:active, .fusion-buy-now-button:active {
+    transform: scale(0.95);
+  }
+
+  .fusion-click-ripple {
+    position: relative;
+    overflow: hidden;
+  }
+  .fusion-click-ripple::after {
+    content: "";
+    display: block;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    background-image: radial-gradient(circle, #fff 10%, transparent 10.01%);
+    background-repeat: no-repeat;
+    background-position: 50%;
+    transform: scale(10, 10);
+    opacity: 0;
+    transition: transform 0.5s, opacity 1s;
+  }
+  .fusion-click-ripple:active::after {
+    transform: scale(0, 0);
+    opacity: 0.3;
+    transition: 0s;
+  }
+
+  .fusion-btn-success {
+    background-color: #108043 !important;
+    border-color: #108043 !important;
+    color: white !important;
+    animation: fusion-pop 0.3s ease-out;
+  }
+  @keyframes fusion-pop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+  }
+  .fusion-btn-success::after {
+    content: " ✓";
+    margin-left: 8px;
+  }
+{% endstyle %}
+
+<script>
+  function getShopifyRoot() {
+    let root = window.Shopify && window.Shopify.routes ? window.Shopify.routes.root : '/';
+    if (root.endsWith('/')) {
+      return root;
+    }
+    return root + '/';
+  }
+
+  function addToCart(variantId, quantity) {
+    let vid = Number(variantId);
+    
+    // If no variant ID passed, try to detect it from the page
+    if (!vid || vid === 0) {
+      const urlParams = new URLSearchParams(window.location.search);
+      vid = Number(urlParams.get('variant'));
+      
+      if (!vid) {
+        const variantInput = document.querySelector('input[name="id"]');
+        if (variantInput) vid = Number(variantInput.value);
+      }
+    }
+
+    if (!vid) {
+      console.error('Fusion: No variant ID found');
+      alert('Please select a product/variant first');
+      return;
+    }
+
+    // Get the button that was clicked
+    const btn = event?.currentTarget || document.activeElement;
+    if (btn) {
+      btn.classList.add('fusion-btn-loading');
+      btn.classList.add('fusion-click-ripple');
+    }
+
+    const root = getShopifyRoot();
+    console.log('Fusion: Adding to cart', { variantId: vid, quantity, root });
+    
+    let formData = {
+     'items': [{
+      'id': vid,
+      'quantity': parseInt(quantity) || 1
+      }]
+    };
+
+    fetch(root + 'cart/add.js', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(formData)
+    })
+    .then(response => {
+      if (!response.ok) {
+        return response.json().then(err => { throw err; });
+      }
+      return response.json();
+    })
+    .then(data => {
+        console.log('Fusion: Success', data);
+
+        if (btn) {
+          btn.classList.remove('fusion-btn-loading');
+          btn.classList.add('fusion-btn-success');
+          
+          setTimeout(() => {
+            btn.classList.remove('fusion-btn-success');
+          }, 2000);
+        }
+
+        if (window.fusionRefreshCartUI) {
+          window.fusionRefreshCartUI(data);
+        } else {
+          document.dispatchEvent(new CustomEvent('cart:updated', { detail: { cart: data } }));
+          // Fallback refresh cart drawer
+          if (window.location.pathname !== '/cart') {
+            fetch(root + 'cart.js')
+              .then(res => res.json())
+              .then(cart => {
+                 document.dispatchEvent(new CustomEvent('cart:refresh', { detail: cart }));
+              }).catch(() => {});
+          }
+        }
+    })
+    .catch((error) => {
+      console.error('Fusion Error:', error);
+      if (btn) btn.classList.remove('fusion-btn-loading');
+      alert('Could not add to cart: ' + (error.description || error.message || 'Check stock'));
+    });
+  }
+
+  function buyNow(variantId, quantity) {
+    let vid = Number(variantId);
+    if (!vid || vid === 0) {
+      const urlParams = new URLSearchParams(window.location.search);
+      vid = Number(urlParams.get('variant'));
+      if (!vid) {
+        const variantInput = document.querySelector('input[name="id"]');
+        if (variantInput) vid = Number(variantInput.value);
+      }
+    }
+
+    if (!vid) {
+      alert('Please select a product/variant first');
+      return;
+    }
+
+    // Get the button that was clicked
+    const btn = event?.currentTarget || document.activeElement;
+    if (btn) {
+      btn.classList.add('fusion-btn-loading');
+      btn.classList.add('fusion-click-ripple');
+    }
+
+    const root = getShopifyRoot();
+    const qty = parseInt(quantity) || 1;
+    
+    // Optimized for speed: Single-jump redirect to checkout with product added
+    console.log('Fusion: Fast Buy Now', { variantId: vid, quantity: qty });
+    window.location.href = `${root}cart/add?id=${vid}&quantity=${qty}&return_to=/checkout`;
+  }
+
+  // Listen for variant changes if on product page
+  document.addEventListener('change', (e) => {
+    if (e.target.name === 'id' || e.target.classList.contains('variant-selector')) {
+       const newId = e.target.value;
+       if (newId) {
+         document.querySelectorAll('[onclick*="addToCart"], [onclick*="buyNow"]').forEach(btn => {
+           const onclick = btn.getAttribute('onclick');
+           if (onclick) {
+             const updated = onclick.replace(/'\d+'/, `'${newId}'`);
+             btn.setAttribute('onclick', updated);
+           }
+         });
+       }
+    }
+  });
+</script>
+
+{% schema %}
+{
+  "name": "Custom Buttons",
+  "target": "section",
+  "settings": [
+    { "type": "product", "id": "product", "label": "Product", "autofill": true },
+    {
+      "type": "header",
+      "content": "Layout & General"
+    },
+    { "type": "select", "id": "direction", "label": "Direction", "options": [ { "value": "row", "label": "Horizontal" }, { "value": "column", "label": "Vertical" } ], "default": "row" },
+    { "type": "select", "id": "alignment", "label": "Alignment", "options": [ { "value": "flex-start", "label": "Left" }, { "value": "center", "label": "Center" }, { "value": "flex-end", "label": "Right" } ], "default": "center" },
+    { "type": "checkbox", "id": "full_width", "label": "Full Width Buttons", "default": false },
+    { "type": "range", "id": "gap", "min": 0, "max": 50, "step": 1, "unit": "px", "label": "Gap", "default": 10 },
+    { "type": "range", "id": "margin_top", "min": 0, "max": 100, "step": 1, "unit": "px", "label": "Margin Top", "default": 20 },
+    { "type": "range", "id": "margin_bottom", "min": 0, "max": 100, "step": 1, "unit": "px", "label": "Margin Bottom", "default": 20 },
+    { "type": "range", "id": "button_width", "min": 50, "max": 1000, "step": 10, "unit": "px", "label": "Button Width (Standard)", "default": 200 },
+    {
+      "type": "header",
+      "content": "Add to Cart - Content"
+    },
+    { "type": "checkbox", "id": "show_atc", "label": "Show ATC", "default": true },
+    { "type": "select", "id": "atc_type", "label": "Type", "options": [ { "value": "standard", "label": "Standard" }, { "value": "image", "label": "Image" } ], "default": "standard" },
+    { "type": "text", "id": "atc_text", "label": "Text", "default": "Add to Cart" },
+    { "type": "image_picker", "id": "atc_image", "label": "Image" },
+    { "type": "range", "id": "atc_image_width", "min": 50, "max": 500, "step": 5, "unit": "px", "label": "Image Width", "default": 200 },
+    { "type": "select", "id": "atc_animation", "label": "Hover Animation", "options": [ { "value": "", "label": "None" }, { "value": "fusion-pulse", "label": "Pulse" }, { "value": "fusion-shake", "label": "Shake" }, { "value": "fusion-zoom", "label": "Zoom In" }, { "value": "fusion-lift", "label": "Lift Up" }, { "value": "fusion-glow", "label": "Glow" }, { "value": "fusion-shine", "label": "Shine" }, { "value": "fusion-rotate", "label": "Rotate" } ], "default": "" },
+    {
+      "type": "header",
+      "content": "Add to Cart - Design"
+    },
+    { "type": "range", "id": "atc_font_size", "min": 10, "max": 40, "step": 1, "unit": "px", "label": "Font Size", "default": 16 },
+    { "type": "select", "id": "atc_font_weight", "label": "Weight", "options": [ { "value": "300", "label": "Light" }, { "value": "400", "label": "Normal" }, { "value": "600", "label": "Semi-Bold" }, { "value": "700", "label": "Bold" } ], "default": "600" },
+    { "type": "select", "id": "atc_text_transform", "label": "Transform", "options": [ { "value": "none", "label": "None" }, { "value": "uppercase", "label": "UPPERCASE" }, { "value": "lowercase", "label": "lowercase" }, { "value": "capitalize", "label": "Capitalize" } ], "default": "none" },
+    { "type": "color", "id": "atc_bg_color", "label": "BG Color", "default": "#000000" },
+    { "type": "color", "id": "atc_text_color", "label": "Text Color", "default": "#ffffff" },
+    { "type": "color", "id": "atc_hover_bg_color", "label": "Hover BG", "default": "#333333" },
+    { "type": "color", "id": "atc_hover_text_color", "label": "Hover Text", "default": "#ffffff" },
+    { "type": "range", "id": "atc_padding_v", "min": 0, "max": 50, "step": 1, "unit": "px", "label": "Padding V", "default": 12 },
+    { "type": "range", "id": "atc_padding_h", "min": 0, "max": 100, "step": 1, "unit": "px", "label": "Padding H", "default": 24 },
+    { "type": "range", "id": "atc_border_radius", "min": 0, "max": 50, "step": 1, "unit": "px", "label": "Radius", "default": 4 },
+    { "type": "range", "id": "atc_border_width", "min": 0, "max": 10, "step": 1, "unit": "px", "label": "Border Width", "default": 0 },
+    { "type": "color", "id": "atc_border_color", "label": "Border Color", "default": "#000000" },
+    { "type": "checkbox", "id": "atc_show_shadow", "label": "Shadow", "default": false },
+    { "type": "color", "id": "atc_shadow_color", "label": "Shadow Color", "default": "rgba(0,0,0,0.2)" },
+    {
+      "type": "header",
+      "content": "Buy Now - Content"
+    },
+    { "type": "checkbox", "id": "show_buy_now", "label": "Show Buy Now", "default": true },
+    { "type": "select", "id": "buy_now_type", "label": "Type", "options": [ { "value": "standard", "label": "Standard" }, { "value": "image", "label": "Image" } ], "default": "standard" },
+    { "type": "text", "id": "buy_now_text", "label": "Text", "default": "Buy It Now" },
+    { "type": "image_picker", "id": "buy_now_image", "label": "Image" },
+    { "type": "range", "id": "buy_now_image_width", "min": 50, "max": 500, "step": 5, "unit": "px", "label": "Image Width", "default": 200 },
+    { "type": "select", "id": "buy_now_animation", "label": "Hover Animation", "options": [ { "value": "", "label": "None" }, { "value": "fusion-pulse", "label": "Pulse" }, { "value": "fusion-shake", "label": "Shake" }, { "value": "fusion-zoom", "label": "Zoom In" }, { "value": "fusion-lift", "label": "Lift Up" }, { "value": "fusion-glow", "label": "Glow" }, { "value": "fusion-shine", "label": "Shine" }, { "value": "fusion-rotate", "label": "Rotate" } ], "default": "" },
+    {
+      "type": "header",
+      "content": "Buy Now - Design"
+    },
+    { "type": "range", "id": "buy_now_font_size", "min": 10, "max": 40, "step": 1, "unit": "px", "label": "Font Size", "default": 16 },
+    { "type": "select", "id": "buy_now_font_weight", "label": "Weight", "options": [ { "value": "300", "label": "Light" }, { "value": "400", "label": "Normal" }, { "value": "600", "label": "Semi-Bold" }, { "value": "700", "label": "Bold" } ], "default": "600" },
+    { "type": "select", "id": "buy_now_text_transform", "label": "Transform", "options": [ { "value": "none", "label": "None" }, { "value": "uppercase", "label": "UPPERCASE" }, { "value": "lowercase", "label": "lowercase" }, { "value": "capitalize", "label": "Capitalize" } ], "default": "none" },
+    { "type": "color", "id": "buy_now_bg_color", "label": "BG Color", "default": "#5a31f4" },
+    { "type": "color", "id": "buy_now_text_color", "label": "Text Color", "default": "#ffffff" },
+    { "type": "color", "id": "buy_now_hover_bg_color", "label": "Hover BG", "default": "#4a28c7" },
+    { "type": "color", "id": "buy_now_hover_text_color", "label": "Hover Text", "default": "#ffffff" },
+    { "type": "range", "id": "buy_now_padding_v", "min": 0, "max": 50, "step": 1, "unit": "px", "label": "Padding V", "default": 12 },
+    { "type": "range", "id": "buy_now_padding_h", "min": 0, "max": 100, "step": 1, "unit": "px", "label": "Padding H", "default": 24 },
+    { "type": "range", "id": "buy_now_border_radius", "min": 0, "max": 50, "step": 1, "unit": "px", "label": "Radius", "default": 4 },
+    { "type": "range", "id": "buy_now_border_width", "min": 0, "max": 10, "step": 1, "unit": "px", "label": "Border Width", "default": 0 },
+    { "type": "color", "id": "buy_now_border_color", "label": "Border Color", "default": "#000000" },
+    { "type": "checkbox", "id": "buy_now_show_shadow", "label": "Shadow", "default": false },
+    { "type": "color", "id": "buy_now_shadow_color", "label": "Shadow Color", "default": "rgba(0,0,0,0.2)" }
+  ]
+}
+{% endschema %}
