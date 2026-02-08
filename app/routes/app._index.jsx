@@ -1,16 +1,20 @@
+import { useLoaderData } from "react-router";
 import { useState, useEffect } from "react";
 import { useAppBridge } from "@shopify/app-bridge-react";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { authenticate } from "../shopify.server";
 
 export const loader = async ({ request }) => {
-  await authenticate.admin(request);
-  return null;
+  const { session } = await authenticate.admin(request);
+  return { shop: session.shop };
 };
 
 export default function Index() {
+  const { shop } = useLoaderData();
   const shopify = useAppBridge();
   const [showPopup, setShowPopup] = useState(false);
+
+  const EXTENSION_ID = "c33408b829dd14271a746df36a7e2863";
 
   useEffect(() => {
     const hasShownPopup = localStorage.getItem("fusionSetupPopupShown");
@@ -31,6 +35,7 @@ export default function Index() {
     {
       title: "Global ATC Icon",
       type: "App Embed",
+      handle: "global_atc_icon",
       icon: "🌐",
       color: "#007ace",
       description: "Auto-inject icons onto every product card store-wide. Perfect for consistent conversion across collections.",
@@ -39,6 +44,7 @@ export default function Index() {
     {
       title: "Sticky ATC Bar",
       type: "App Block",
+      handle: "sticky_atc_bar",
       icon: "📏",
       color: "#108043",
       description: "A conversion-focused bar with variants, quantity, and countdown timer that follows the user on scroll.",
@@ -47,6 +53,7 @@ export default function Index() {
     {
       title: "Floating ATC Overlay",
       type: "App Block",
+      handle: "atc_icon_overlay",
       icon: "📍",
       color: "#5c6ac4",
       description: "A draggable, floating circular button that provides instant access to 'Add to Cart' from any screen position.",
@@ -55,6 +62,7 @@ export default function Index() {
     {
       title: "Grid ATC Injector",
       type: "App Block",
+      handle: "grid_atc_injector",
       icon: "🔳",
       color: "#de3618",
       description: "Automatically detects and injects customizable ATC buttons into your theme's existing product grids.",
@@ -63,12 +71,23 @@ export default function Index() {
     {
       title: "Custom Button Styler",
       type: "App Block",
+      handle: "custom_buttons",
       icon: "🎨",
       color: "#bf0711",
       description: "The ultimate styling tool. Replace default buttons with custom images, animations, and high-end typography.",
       videoUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
     }
   ];
+
+  const getDeepLink = (feature) => {
+    const baseUrl = `https://${shop}/admin/themes/current/editor`;
+    const templateParam = "template=product";
+    
+    if (feature.type === "App Embed") {
+      return `${baseUrl}?${templateParam}&context=apps&activateAppEmbed=${EXTENSION_ID}/${feature.handle}`;
+    }
+    return `${baseUrl}?${templateParam}&context=apps&addAppBlockId=${EXTENSION_ID}/${feature.handle}&target=section`;
+  };
 
   return (
     <s-page heading="Fusion Add to Cart Hub">
@@ -150,7 +169,14 @@ export default function Index() {
                 
                 <div style={{ marginTop: 'auto', paddingTop: '20px' }}>
                   <s-stack direction="block" gap="base">
-                    <s-button variant="primary" style={{ width: '100%', height: '48px', fontWeight: '700' }} onClick={() => { shopify.toast.show(`Opening ${feature.title}...`) }}>
+                    <s-button 
+                      variant="primary" 
+                      style={{ width: '100%', height: '48px', fontWeight: '700' }} 
+                      onClick={() => { 
+                        shopify.toast.show(`Opening ${feature.title} editor...`);
+                        window.open(getDeepLink(feature), '_blank');
+                      }}
+                    >
                       Enable & Configure
                     </s-button>
                     <s-button variant="plain" onClick={() => window.open(feature.videoUrl, '_blank')}>

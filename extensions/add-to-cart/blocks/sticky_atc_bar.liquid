@@ -47,6 +47,15 @@
                 style="background-color: {{ block.settings.atc_bg_color }}; color: {{ block.settings.atc_text_color }};">
           {{ block.settings.atc_text }}
         </button>
+
+        {% if block.settings.show_buy_now %}
+          <button type="button" 
+                  class="fusion-sticky-buy-btn"
+                  onclick="stickyBuyNow()"
+                  style="background-color: {{ block.settings.buy_bg_color }}; color: {{ block.settings.buy_text_color }};">
+            {{ block.settings.buy_text }}
+          </button>
+        {% endif %}
       </div>
     </div>
   </div>
@@ -149,7 +158,7 @@
     -webkit-appearance: none;
     margin: 0;
   }
-  .fusion-sticky-atc-btn {
+  .fusion-sticky-atc-btn, .fusion-sticky-buy-btn {
     padding: 10px 25px;
     border: none;
     border-radius: 4px;
@@ -158,13 +167,19 @@
     transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     position: relative;
     overflow: hidden;
+    white-space: nowrap;
   }
-  .fusion-sticky-atc-btn:hover {
+  .fusion-sticky-atc-btn:hover, .fusion-sticky-buy-btn:hover {
     filter: brightness(0.9);
     transform: translateY(-2px);
   }
-  .fusion-sticky-atc-btn:active {
+  .fusion-sticky-atc-btn:active, .fusion-sticky-buy-btn:active {
     transform: scale(0.95);
+  }
+
+  .fusion-sticky-buy-btn {
+    background-color: #000;
+    color: #fff;
   }
 
   .fusion-sticky-atc-btn.is-success {
@@ -197,6 +212,19 @@
     transform: scale(0, 0);
     opacity: 0.3;
     transition: 0s;
+  }
+
+  .fusion-loader-mini {
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: fusion-spin 0.6s linear infinite;
+    display: inline-block;
+  }
+  @keyframes fusion-spin {
+    to { transform: rotate(360deg); }
   }
 
   @media (max-width: 768px) {
@@ -322,6 +350,18 @@
       alert('Could not add to cart: ' + (err.description || err.message || 'Check stock'));
     });
   }
+
+  function stickyBuyNow() {
+    const variantId = document.getElementById('fusion-variant-select-{{ block.id }}')?.value || '{{ product.selected_or_first_available_variant.id }}';
+    const qty = document.getElementById('fusion-sticky-qty-{{ block.id }}').value;
+    const btn = document.querySelector('.fusion-sticky-buy-btn');
+    
+    btn.innerHTML = '<span class="fusion-loader-mini"></span>';
+    btn.style.pointerEvents = 'none';
+    
+    // Fast Buy Permalink
+    window.location.href = `/cart/add?id=${variantId}&quantity=${qty}&return_to=/checkout`;
+  }
 </script>
 
 {% schema %}
@@ -338,6 +378,14 @@
     { "type": "text", "id": "atc_text", "label": "Button Text", "default": "Add to cart" },
     { "type": "color", "id": "atc_bg_color", "label": "Button Background", "default": "#ccff00" },
     { "type": "color", "id": "atc_text_color", "label": "Button Text Color", "default": "#000000" },
+    {
+      "type": "header",
+      "content": "Buy Now Button"
+    },
+    { "type": "checkbox", "id": "show_buy_now", "label": "Show Buy Now", "default": true },
+    { "type": "text", "id": "buy_text", "label": "Buy Button Text", "default": "Buy it now" },
+    { "type": "color", "id": "buy_bg_color", "label": "Buy Button Background", "default": "#000000" },
+    { "type": "color", "id": "buy_text_color", "label": "Buy Button Text Color", "default": "#ffffff" },
     {
       "type": "header",
       "content": "Countdown Timer"

@@ -2,7 +2,7 @@
 
 client_id = "c33408b829dd14271a746df36a7e2863"
 name = "Fusion add to cart"
-application_url = "https://example.com"
+application_url = "https://add-to-cart-81nn.onrender.com"
 embedded = true
 
 [build]
@@ -24,4 +24,4 @@ api_version = "2026-04"
 scopes = "write_products"
 
 [auth]
-redirect_urls = [ "https://example.com/api/auth" ]
+redirect_urls = [ "https://add-to-cart-81nn.onrender.com/api/auth" ]
