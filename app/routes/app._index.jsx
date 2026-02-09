@@ -179,11 +179,13 @@ export default function Index() {
                     >
                       Enable & Configure
                     </s-button>
+                    {/* 
                     <s-button variant="plain" onClick={() => window.open(feature.videoUrl, '_blank')}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#666' }}>
                         <span>📺</span> View Setup Guide
                       </div>
-                    </s-button>
+                    </s-button> 
+                    */}
                   </s-stack>
                 </div>
               </s-stack>
